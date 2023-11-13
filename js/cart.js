@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const cCount = document.createElement("input");
     cCount.type = "number";
     cCount.min = "0";
-    cCount.value = product.count;
+    cCount.value = product.count || 1;
     article.appendChild(cCount);
     cCount.addEventListener("input", () => {
       const newCount = parseFloat(cCount.value); // guarda la nueva cantidad indicada en el input
@@ -78,8 +78,6 @@ document.addEventListener("DOMContentLoaded", () => {
       ); // busca el producto por el nombre
 
       if (productToUpdate) {
-        // si existe el producto
-
         productToUpdate.count = newCount; // actualiza su valor
 
         localStorage.setItem("cart", JSON.stringify(cart)); // guarda los cambios en el localStorage
@@ -89,12 +87,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const individualSubtotal = document.createElement("p");
     article.appendChild(individualSubtotal);
 
-    const trash = document.createElement("div");
-    trash.innerHTML = `<button type="button" class="btn btn-outline-danger">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"></path>
-    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z"></path>
-    </svg></button>`;
+    const trash = document.createElement("span");
+    trash.innerHTML = `<button type="button" class="btn btn-outline-danger ">
+    <i class="bi bi-trash3 "></i></button>`;
 
     article.appendChild(trash);
 
@@ -113,12 +108,12 @@ document.addEventListener("DOMContentLoaded", () => {
     function updateSubtotal() {
       const unitCost = parseFloat(product.price.replace(/[^0-9.-]+/g, ""));
       const count = parseFloat(cCount.value) || 0;
-      const subtotal = unitCost * count;
+      let subtotal = unitCost * count; // Inicializar el subtotal
 
       individualSubtotal.innerHTML = `<b>${product.price.substring(
         0,
         4
-      )} ${subtotal.toFixed(2)}</b>`; //calcula el total de cada producto
+      )} ${subtotal.toFixed(2)}</b>`; // calcula el total de cada producto
 
       let total = 0;
 
@@ -181,13 +176,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   ////////////////////////////////////////////////////
 
-  // Entrega 6 - Parte 2:
+  // Validaciones
 
   // Variables para elementos del DOM
   const forms = document.querySelectorAll(".needs-validation");
-  const checkbox = document.querySelector("#creditCard, #transfer");
   const validationText = document.getElementById("paymentValidation");
-  const compraExitosaDiv = document.getElementById("compraExitosa");
   const saveBtn = document.getElementById("saveBtn");
   const formPay = document.querySelector(".centrar p");
   const cancel = document.getElementById("cancel");
@@ -260,7 +253,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!form.checkValidity()) {
         event.preventDefault();
         event.stopPropagation();
-        compraExitosaDiv.style.display = "none";
       }
 
       for (let i = 0; i < cart.length; i++) {
@@ -270,8 +262,6 @@ document.addEventListener("DOMContentLoaded", () => {
           hasZeroArticles = false; // si encuentra 0, indica que no cumple la condición
           event.preventDefault();
           event.stopPropagation();
-          compraExitosaDiv.style.display = "none";
-          console.error("producto 0"); // prueba producto 0
           break; // detiene la ejecución, sin esto daría por valido un form si el ultimo valor es distinto de 0
         } else {
           hasZeroArticles = true; // al comprobar que no hay productos 0, lo da por valido
@@ -292,9 +282,6 @@ document.addEventListener("DOMContentLoaded", () => {
         fullAddress = false;
         event.preventDefault();
         event.stopPropagation();
-        compraExitosaDiv.style.display = "none";
-
-        console.error("error dirección"); // prueba error dirección
       }
 
       // Validar que se haya seleccionado algún método de pago
@@ -307,7 +294,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (
             cardNumber.value.trim() !== "" &&
             cardCvv.value.trim() !== "" &&
-            cardExpiration.value.trim() !== ""
+            cardExpiration.value.trim() !== "" 
           ) {
             isPaymentMethodValid = true;
           } else {
@@ -326,9 +313,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
       form.classList.add("was-validated");
 
-      if (!checkbox.checked) {
-        checkbox.classList.add("is-invalid");
+      // Verifica si ninguno de los checkboxes está seleccionado
+      if (!creditCardRadio.checked && !transferRadio.checked) {
+        creditCardRadio.classList.add("is-invalid");
+        transferRadio.classList.add("is-invalid");
         validationText.style.display = "block";
+      } else {
+        creditCardRadio.classList.remove("is-invalid");
+        transferRadio.classList.remove("is-invalid");
+        validationText.style.display = "none";
       }
     
 
@@ -375,10 +368,27 @@ document.addEventListener("DOMContentLoaded", () => {
       isPaymentMethodValid &&
       form.checkValidity()
     ) {
+      
       // comprueba que cumpla con todo lo necesario antes de enviarlo
       form.reset();
       updateFeedbackClasses();
-      compraExitosaDiv.style.display = "block";
+
+              // Alerta modal con bootstrap
+              document.getElementById("exampleModal").classList.add("fade");
+              document.getElementById("exampleModal").style.display = "block";
+              setTimeout(function () {
+                document.getElementById("exampleModal").classList.add("show");
+              }, 80);
+      
+              document
+                .querySelectorAll('[data-mdb-dismiss="modal"]')
+                .forEach(function (element) {
+                  element.addEventListener("click", function () {
+                    document.getElementById("exampleModal").classList.remove("show");
+                    document.getElementById("exampleModal").style.display = "none";
+                  });
+                });
+
     } else {
       formIsValid = false; // si no cumple alguna condición le da valor invalido al form
     }
@@ -387,7 +397,6 @@ document.addEventListener("DOMContentLoaded", () => {
       // antes de enviarlo controla que el form sea valido, en caso contrario detiene el envio
       event.preventDefault();
       event.stopPropagation();
-      compraExitosaDiv.style.display = "none";
     }
   });
 });
